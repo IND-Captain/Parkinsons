@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+from pydub import AudioSegment
 import joblib
 import numpy as np
 import warnings
@@ -24,6 +25,14 @@ except FileNotFoundError:
     scaler = None
     print("❌ Error: parkinsons_model.pkl or feature_scaler.pkl not found.")
     print("Please run train_parkinsons_model.py to generate the model files.")
+
+def make_error_response(message, code, status_code):
+    """Helper to create a structured error response."""
+    return jsonify({
+        'error': {
+            'code': code,
+            'message': message
+        }}), status_code
 
 @app.route('/test_mic', methods=['POST'])
 def test_mic():
@@ -53,26 +62,29 @@ def test_mic():
 @app.route('/process_and_predict', methods=['POST'])
 def process_and_predict():
     if not model or not scaler:
-        return jsonify({'error': 'Model not loaded. Please check server logs.'}), 500
+        return make_error_response('Model not loaded. Please contact support.', 'MODEL_NOT_FOUND', 500)
 
     try:
         if 'audio' not in request.files:
-            return jsonify({'error': 'No audio file provided'}), 400
+            return make_error_response('No audio file provided.', 'NO_AUDIO_FILE', 400)
         
         file = request.files['audio']
         language = request.form.get('language', 'en')
         print(f"Processing request for language: {language}")
 
         audio_bytes = file.read()
-        y, sr = librosa.load(io.BytesIO(audio_bytes), sr=22050)
+
+        # Convert audio from whatever format it is (e.g., webm) to WAV
+        audio_segment = AudioSegment.from_file(io.BytesIO(audio_bytes))
+        wav_bytes = io.BytesIO()
+        audio_segment.export(wav_bytes, format="wav")
+        wav_bytes.seek(0)
+        y, sr = librosa.load(wav_bytes, sr=22050)
 
         # --- Quality Check before processing ---
         quality_report = analyze_audio_quality(y, sr)
         if quality_report['warnings']:
-            return jsonify({
-                'error': '. '.join(quality_report['warnings']),
-                'quality_report': quality_report
-            }), 400
+            return make_error_response('. '.join(quality_report['warnings']), 'POOR_AUDIO_QUALITY', 400)
 
         # --- Pre-processing Pipeline ---
         y_filtered = butter_bandpass_filter(y, 300, 1500, sr)
@@ -92,12 +104,17 @@ def process_and_predict():
         return jsonify({
             'prediction': int(prediction),      # Cast to standard Python int
             'confidence': float(confidence),    # Cast to standard Python float
-            'quality_report': quality_report
+            'quality_report': {
+                'warnings': quality_report['warnings'],
+                'quality_score': float(quality_report['quality_score']),
+                'snr': float(quality_report['snr']),
+                'amplitude': float(quality_report['amplitude'])
+            }
         })
 
     except Exception as e:
         print(f"Prediction error: {e}")
-        return jsonify({'error': 'An error occurred during prediction.'}), 500
+        return make_error_response('An unexpected error occurred during prediction.', 'PREDICTION_FAILED', 500)
 
 @app.route('/export', methods=['POST'])
 def export_report():

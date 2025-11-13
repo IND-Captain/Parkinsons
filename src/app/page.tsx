@@ -1,17 +1,43 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, use } from 'react'
+import React, { useState, useRef, useEffect, useCallback, Suspense, lazy } from 'react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Mic, MicOff, Play, Pause, Download, Info, AlertTriangle, CheckCircle, TestTube2, HelpCircle } from 'lucide-react'
+import { Mic, MicOff, Play, Pause, Download, Info, AlertTriangle, CheckCircle, TestTube2, HelpCircle, LayoutDashboard, UserCog, Settings, LogOut, MoveRight, PhoneCall } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import AboutSection from '@/components/sections/AboutSection'
-import ResearchSection from '@/components/sections/ResearchSection'
-import ContactSection from '@/components/sections/ContactSection'
+import Footer from '@/components/Footer' 
+import { Sidebar, SidebarBody, SidebarLink } from "@/components/ui/sidebar";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { Hero } from "@/components/ui/animated-hero";
+import { BackgroundPaths } from "@/components/ui/background-paths";
+
+// A simple, self-contained Progress component to replace the problematic one.
+const Progress = ({ value, className }: { value?: number; className?: string }) => {
+  const progressValue = value ?? 100; // Default to 100% for indeterminate state
+  return (
+    <div
+      className={`relative h-2 w-full overflow-hidden rounded-full bg-primary/20 ${className || ''}`}
+    >
+      <div
+        className="h-full w-full flex-1 bg-primary transition-all"
+        style={{
+          transform: `translateX(-${100 - progressValue}%)`,
+          // For indeterminate state, add a simple animation
+          animation: value === undefined ? 'indeterminate-progress 1.5s infinite linear' : 'none',
+        }}
+      />
+    </div>
+  );
+};
 
 interface SelfCheckState {
   hasCold: boolean;
@@ -162,8 +188,81 @@ const translations = {
   }
 }
 
+export const Logo = () => {
+  return (
+    <Link
+      href="#"
+      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+    >
+      <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+      <motion.span
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="font-medium text-black dark:text-white whitespace-pre"
+      >
+        Acet Labs
+      </motion.span>
+    </Link>
+  );
+};
+
+export const LogoIcon = () => {
+  return (
+    <Link
+      href="#"
+      className="font-normal flex space-x-2 items-center text-sm text-black py-1 relative z-20"
+    >
+      <div className="h-5 w-6 bg-black dark:bg-white rounded-br-lg rounded-tr-sm rounded-tl-lg rounded-bl-sm flex-shrink-0" />
+    </Link>
+  );
+};
+
+// Dummy dashboard component with content
+const Dashboard = ({ history, t }: { history: PredictionResult[], t: any }) => {
+  if (history.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-8">
+        <div className="text-center text-gray-500">
+          <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <h3 className="text-lg font-semibold">No History Yet</h3>
+          <p>Your analysis results will appear here after you record your voice.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 md:p-8">
+      <h2 className="text-2xl font-bold mb-4">Session History</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {history.map((result, index) => (
+          <Card key={index}>
+            <CardHeader>
+              <CardTitle className={`flex items-center justify-between text-lg ${result.prediction === 1 ? 'text-red-500' : 'text-green-500'}`}>
+                <span>{result.prediction === 1 ? t.resultsRisk : t.resultsHealthy}</span>
+                <Badge variant={result.prediction === 1 ? 'destructive' : 'default'}>
+                  {result.confidence.toFixed(0)}% {t.confidence}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                {new Date(result.timestamp).toLocaleString()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm space-y-1">
+                <p><strong>{t.voiceQualityScore}:</strong> {result.detailed_analysis?.voice_quality_score.toFixed(0)}%</p>
+                <p><strong>{t.severity}:</strong> <span className="capitalize">{result.detailed_analysis?.severity_assessment}</span></p>
+              </div>
+            </CardContent>
+          </Card>
+          ))}
+      </div>
+    </div>
+  );
+};
+
 export default function ParkinsonsDetectionApp() {
-  const [activeSection, setActiveSection] = useState('recording')
+  const [activeSection, setActiveSection] = useState('home')
   const [isRecording, setIsRecording] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
@@ -182,7 +281,52 @@ export default function ParkinsonsDetectionApp() {
   const [isTestingMic, setIsTestingMic] = useState(false);
   const [sessionHistory, setSessionHistory] = useState<PredictionResult[]>([]);
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showApp, setShowApp] = useState(false);
   
+  // Lazy load sections to improve initial load time.
+  const ResearchSection = lazy(() => import('@/components/sections/ResearchSection'));
+  const ContactSection = () => (
+    <section id="contact" className="py-20">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-3xl font-bold text-center mb-8">Contact Us</h2>
+        <div className="max-w-2xl mx-auto">
+          <p className="text-center mb-8 text-muted-foreground">
+            Have questions or feedback? We'd love to hear from you. Fill out the form below or email us directly.
+          </p>
+          <Card>
+            <CardHeader>
+              <CardTitle>Get in Touch</CardTitle>
+              <CardDescription>
+                For inquiries, please email us at: <a href="mailto:support@parkinsonsai.com" className="text-blue-500 hover:underline">support@parkinsonsai.com</a> or use the form below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" placeholder="Your Name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" placeholder="your@email.com" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea id="message" placeholder="Your message..." rows={5} />
+                </div>
+                <Button type="submit" className="w-full">Send Message</Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </section>
+  );
+  const PrivacyPolicySection = lazy(() => import('@/components/sections/PrivacyPolicySection'));
+  const TermsOfServiceSection = lazy(() => import('@/components/sections/TermsOfServiceSection'));
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -190,7 +334,37 @@ export default function ParkinsonsDetectionApp() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const animationRef = useRef<number | null>(null)
 
+  const onSectionChange = (section: string) => {
+    setActiveSection(section);
+    // You can add scrolling logic here if needed
+  };
+
   const t = translations[language]
+
+  const sidebarLinks = [
+    {
+      label: "Dashboard",
+      href: "#",
+      onClick: () => setShowApp(false),
+      icon: (
+        <LayoutDashboard className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Voice Recording",
+      href: "#",
+      icon: (
+        <TestTube2 className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+    {
+      label: "Contact",
+      href: "#",
+      icon: (
+        <PhoneCall className="text-neutral-700 dark:text-neutral-200 h-5 w-5 flex-shrink-0" />
+      ),
+    },
+  ];
 
   useEffect(() => {
     // Listen for language changes from navbar
@@ -304,7 +478,7 @@ export default function ParkinsonsDetectionApp() {
       }
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/wav' })
+        const blob = new Blob(chunksRef.current, { type: mediaRecorder.mimeType || 'audio/webm' })
         setAudioBlob(blob)
         const url = URL.createObjectURL(blob)
         setAudioUrl(url)
@@ -479,6 +653,7 @@ export default function ParkinsonsDetectionApp() {
       // First, extract features from the audio
       const formData = new FormData()
       formData.append('audio', audioBlob, 'recording.wav')
+      formData.append('language', language)
       
       // Send audio to Python server for processing and prediction
       const predictionResponse = await fetch('http://127.0.0.1:5001/process_and_predict', {
@@ -487,16 +662,25 @@ export default function ParkinsonsDetectionApp() {
       })
 
       if (!predictionResponse.ok) {
-        // Try to get specific error message from the server
-        let errorMessage = 'Analysis failed';
+        let errorCode = 'UNKNOWN_ERROR';
+        let errorMessage = t.analysisFailed;
+
         try {
           const errorData = await predictionResponse.json();
-          errorMessage = errorData.error || errorMessage;
+          // Check for our new structured error format
+          if (errorData.error && errorData.error.message) {
+            errorMessage = errorData.error.message;
+            errorCode = errorData.error.code || errorCode;
+          } else if (typeof errorData.error === 'string') {
+            // Fallback for older, simple string errors
+            errorMessage = errorData.error;
+          }
         } catch (e) {
           // Response was not JSON, use the status text
           errorMessage = predictionResponse.statusText;
         }
-        throw new Error(errorMessage);
+        // Throw a structured error object
+        throw { code: errorCode, message: errorMessage };
       }
 
       const predictionData = await predictionResponse.json()
@@ -528,9 +712,22 @@ export default function ParkinsonsDetectionApp() {
       })
     } catch (error) {
       console.error('Analysis error:', error)
+      
+      let title = t.analysisFailed;
+      let description = t.couldNotAnalyzeYourRecordingPleaseTryAgain;
+
+      // Handle the structured error
+      if (typeof error === 'object' && error !== null && 'message' in error) {
+        const err = error as { message: string };
+        // Use the error message if it's not empty, otherwise provide a fallback.
+        description = err.message || 'The server is not responding. Please check if it is running.';
+        // You could add more specific user messages based on the error code here
+        // if ((error as { code: string }).code === 'POOR_AUDIO_QUALITY') { ... }
+      }
+
       toast({
-        title: language === 'hi' ? "विश्लेषण विफल" : t.analysisFailed,
-        description: (error as Error).message || t.couldNotAnalyzeYourRecordingPleaseTryAgain,
+        title: title,
+        description: description,
         variant: "destructive",
       })
     } finally {
@@ -574,20 +771,103 @@ export default function ParkinsonsDetectionApp() {
 
   // Render different sections based on activeSection
   const renderSection = () => {
-    switch(activeSection) {
-      case 'about':
-        return <AboutSection />
-      case 'research':
-        return <ResearchSection />
+    switch (activeSection) {
+      case 'home':
+        return null; // Handled by the main landing page view
       case 'contact':
-        return <ContactSection />
+        return <ContactSection />;
+      case 'privacy':
+        return <PrivacyPolicySection />
+      case 'terms':
+        return <TermsOfServiceSection />
       default:
-        return (
-          <section id="recording" className="py-16 min-h-screen">
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Recording Section */}
-                <Card className="lg:col-span-1">
+        return <Dashboard history={sessionHistory} t={t} />; // Default to dashboard
+    }
+  };
+
+  if (!showApp) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Navbar 
+          activeSection={activeSection} 
+          onSectionChange={(section) => {
+            if (section === 'dashboard' || section === 'voice-recording') setShowApp(true);
+            else setActiveSection(section);
+          }} 
+        />
+        <main className="flex-grow">
+          <BackgroundPaths title="Early Detection for Parkinson's">
+            <div className="flex gap-8 py-20 lg:py-40 items-center justify-center flex-col">
+              <div className="z-10">
+                <Button asChild variant="secondary" size="sm" className="gap-4">
+                  <a href="https://www.parkinsons.org/blog/research/science-news" target="_blank" rel="noopener noreferrer">
+                    Read our launch article <MoveRight className="w-4 h-4" />
+                  </a>
+                </Button>
+              </div>
+              <div className="flex gap-4 flex-col">
+                <h1 className="text-5xl md:text-7xl max-w-2xl tracking-tighter text-center font-regular">
+                  Early Detection for
+                  <span className="relative flex w-full justify-center overflow-hidden text-center md:pb-4 md:pt-1">
+                    &nbsp;
+                    <span className="font-semibold text-blue-500">Parkinson's</span>
+                  </span>
+                </h1>
+
+                <p className="text-lg md:text-xl leading-relaxed tracking-tight text-muted-foreground max-w-2xl text-center">
+                  Empowering early detection of Parkinson's disease through advanced voice analysis and AI technology. Making healthcare accessible to everyone, everywhere.
+                </p>
+              </div>
+              <div className="flex flex-row gap-3">
+                <Button size="lg" className="gap-4" variant="outline" onClick={() => onSectionChange('contact')}>
+                  Contact Us <PhoneCall className="w-4 h-4" />
+                </Button>
+                <Button size="lg" className="gap-4" onClick={() => { setActiveSection('voice-recording'); setShowApp(true); }}>
+                  Launch Tool <MoveRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          </BackgroundPaths>
+          <Suspense fallback={<div>Loading...</div>}>
+            {activeSection !== 'recording' && renderSection()}
+          </Suspense>
+        </main>
+        <Footer 
+          onSectionChange={onSectionChange}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex h-screen bg-background text-foreground">
+      <Sidebar open={sidebarOpen} setOpen={setSidebarOpen}>
+        <SidebarBody className="justify-between gap-10">
+          <div className="flex flex-col flex-1 overflow-y-auto">
+            <div className="mt-8 flex flex-col gap-2">
+              {sidebarLinks.map((link, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "cursor-pointer",
+                    activeSection === link.label.toLowerCase().replace(' ', '-') && "bg-neutral-100 dark:bg-neutral-700 rounded-lg"
+                  )}
+                  onClick={link.onClick ? link.onClick : () => setActiveSection(link.label.toLowerCase().replace(' ', '-'))}>
+                  <SidebarLink link={link} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </SidebarBody>
+      </Sidebar>
+      <main className="flex-1 flex flex-col overflow-y-auto">
+        <div className="flex-grow">
+          {activeSection === 'dashboard' && <Dashboard history={sessionHistory} t={t} />}
+          {activeSection === 'voice-recording' && (
+            <section id="recording" className="py-16">
+              <div className="container mx-auto h-full px-4 sm:px-6 lg:px-8">
+                <div className="grid h-full grid-cols-1 gap-8 lg:grid-cols-2">
+                  <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Mic className="h-5 w-5" />
@@ -687,7 +967,6 @@ export default function ParkinsonsDetectionApp() {
                             <span className="text-sm font-medium">{t.recording}</span>
                             <Badge variant="secondary">{formatTime(recordingTime)}</Badge>
                           </div>
-                          {/* @ts-ignore */}
                           <Progress value={(recordingTime / 15) * 100} className="w-full" />
                         </div>
                       )}
@@ -723,7 +1002,6 @@ export default function ParkinsonsDetectionApp() {
                             </div>
                             <span className="text-sm font-medium">{t.analyzing}</span>
                           </div>
-                          {/* @ts-ignore */}
                           <Progress className="w-full" />
                         </div>
                       )}
@@ -894,23 +1172,13 @@ Disclaimer: This analysis is for educational purposes only and should not replac
                     )}
                   </CardContent>
                 </Card>
+                </div>
               </div>
-
-              {/* Information Tabs are temporarily disabled to resolve build errors. */}
-            </div>
-          </section>
-        )
-    }
-  }
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar 
-        activeSection={activeSection} 
-        onSectionChange={setActiveSection} 
-      />
-      {renderSection()}
-      <Footer />
+            </section>
+          )}
+        </div>
+        <Footer onSectionChange={setActiveSection} />
+      </main>
     </div>
   )
 }
