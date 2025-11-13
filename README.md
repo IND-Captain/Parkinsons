@@ -1,6 +1,18 @@
-# Parkinson's Disease Early Detection Tool
+<div align="center">
+  <h1>🎙️ Parkinson's Disease Early Detection Tool</h1>
+  <p><strong>A comprehensive, production-ready web application for early detection of Parkinson's disease through voice analysis using advanced AI technology.</strong></p>
+  
 
-A comprehensive, production-ready web application for early detection of Parkinson's disease through voice analysis using advanced AI technology.
+## 📚 Table of Contents
+- [🎯 Features](#-features)
+- [🎥 Video Explanation](#-video-explanation)
+- [🚀 Quick Start](#-quick-start)
+- [🏗️ Architecture](#️-architecture)
+- [🌐 API Endpoints](#-api-endpoints)
+- [⚠️ Medical Disclaimer](#️-medical-disclaimer)
+- [🧪 Testing](#-testing)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
 
 ## 🎯 Features
 
@@ -23,12 +35,23 @@ A comprehensive, production-ready web application for early detection of Parkins
   - Mel-frequency cepstral coefficients (MFCCs)
   
 ### User Experience
+- **Intuitive Dashboard**: Clean interface for navigating between sections.
 - **Educational Content**: Comprehensive information about Parkinson's disease
 - **FAQ Section**: Detailed answers to common questions
 - **Download Results**: Export analysis reports as text files
 - **Interactive Visualizations**: Waveform display and progress indicators
 
 ## 🚀 Quick Start
+
+### 🎥 Video Explanation
+
+Watch this video for a complete walkthrough of the application, its features, and how to use it for voice analysis.
+
+[![Parkinson's Detection App Video Walkthrough](https://1drv.ms/v/c/49141525414c6d11/IQBi8VFL3Cs-T6R32L6I37YXATpQIFfr4SHIHd-fpGWtFlc?e=Y3AkC9)
+
+*(Note: Replace `YOUR_VIDEO_ID_HERE` with your actual YouTube video ID to embed the thumbnail and link.)*
+
+---
 
 ### Prerequisites
 - Node.js 18+ 
@@ -186,12 +209,14 @@ All UI text, labels, error messages, and content are fully translated including:
 
 ## ⚠️ Medical Disclaimer
 
-**IMPORTANT**: This tool is for educational purposes only and should not replace professional medical diagnosis. 
+> **IMPORTANT**: This tool is for educational and informational purposes only and is not a substitute for professional medical diagnosis, advice, or treatment.
+>
+> - **Screening Tool**: This application provides a preliminary risk assessment based on voice biomarkers. It is **not** a diagnostic tool.
+> - **Consult Professionals**: Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+> - **Limitations**: Results can be influenced by many factors, including microphone quality, background noise, and temporary health conditions (like a cold). The model's accuracy may vary based on accents and languages not included in the training data.
+> - **Emergency Use**: This tool is **not** for use in emergency medical situations.
 
-- **Screening Tool**: Preliminary assessment, not definitive diagnosis
-- **Consult Professionals**: Always seek medical advice for health concerns
-- **Limitations**: Results may be affected by various factors (microphone quality, background noise, health status). The model is primarily trained on English and may be less accurate for other languages or strong accents.
-- **Emergency Use**: Not suitable for emergency medical situations
+---
 
 ## 🧪 Testing
 
@@ -273,7 +298,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- **Z.AI**: AI SDK integration for intelligent analysis
 - **shadcn/ui**: Beautiful, accessible UI components
 - **Next.js**: React framework for production applications
 - **Tailwind CSS**: Utility-first CSS framework
