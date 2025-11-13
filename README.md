@@ -1,7 +1,8 @@
 <div align="center">
   <h1>🎙️ Parkinson's Disease Early Detection Tool</h1>
   <p><strong>A comprehensive, production-ready web application for early detection of Parkinson's disease through voice analysis using advanced AI technology.</strong></p>
-  
+
+---
 
 ## 📚 Table of Contents
 - [🎯 Features](#-features)
@@ -47,9 +48,8 @@
 
 Watch this video for a complete walkthrough of the application, its features, and how to use it for voice analysis.
 
-[![Parkinson's Detection App Video Walkthrough](https://1drv.ms/v/c/49141525414c6d11/IQBi8VFL3Cs-T6R32L6I37YXATpQIFfr4SHIHd-fpGWtFlc?e=Y3AkC9)
+[![Parkinson's Detection App Video Walkthrough](https://img.youtube.com/vi/YOUR_VIDEO_ID_HERE/0.jpg)](https://1drv.ms/v/c/49141525414c6d11/IQBi8VFL3Cs-T6R32L6I37YXATpQIFfr4SHIHd-fpGWtFlc?e=CfdgAL)
 
-*(Note: Replace `YOUR_VIDEO_ID_HERE` with your actual YouTube video ID to embed the thumbnail and link.)*
 
 ---
 
