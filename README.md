@@ -48,7 +48,7 @@
 
 Watch this video for a complete walkthrough of the application, its features, and how to use it for voice analysis.
 
-[![Parkinson's Detection App Video Walkthrough](https://img.youtube.com/vi/YOUR_VIDEO_ID_HERE/0.jpg)](https://1drv.ms/v/c/49141525414c6d11/IQBi8VFL3Cs-T6R32L6I37YXATpQIFfr4SHIHd-fpGWtFlc?e=CfdgAL)
+[![Parkinson's Detection App Video Walkthrough]](https://1drv.ms/v/c/49141525414c6d11/IQBi8VFL3Cs-T6R32L6I37YXATpQIFfr4SHIHd-fpGWtFlc?e=CfdgAL)
 
 
 ---
